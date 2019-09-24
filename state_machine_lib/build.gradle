@@ -1,0 +1,118 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+
+// https://issuetracker.google.com/issues/72050365
+afterEvaluate {
+    generateReleaseBuildConfig.enabled = false
+}
+
+apply plugin: 'kotlin-android'
+
+def libraryVersionName = "0.1.0"
+def artifactName = 'StateMachine'
+
+android {
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
+    }
+
+    compileSdkVersion 29
+    buildToolsVersion "29.0.2"
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 29
+        versionCode 1
+        versionName libraryVersionName
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-core:2.28.2'
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+
+            artifacts {
+                artifact("$buildDir/outputs/aar/state_machine_lib-release.aar")
+                groupId 'vit.khudenko.android'
+                artifactId 'fsm'
+                version libraryVersionName
+                artifact sourcesJar {
+                    classifier 'sources'
+                }
+            }
+
+            pom.withXml {
+
+                asNode().appendNode('name', artifactName)
+
+                // Define this explicitly if using implementation or api configurations
+                def dependenciesNode = asNode().getAt('dependencies')[0] ?: asNode().appendNode('dependencies')
+
+                pom.withXml {
+                    // Iterate over the implementation dependencies (we don't want the test ones),
+                    // adding a <dependency> node for each
+                    configurations.implementation.allDependencies.each {
+                        // Ensure dependencies such as fileTree are not included.
+                        if (it.name != 'unspecified') {
+                            def dependencyNode = dependenciesNode.appendNode('dependency')
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+bintray {
+    user = project.property('bintray.user')
+    key = project.property('bintray.apiKey')
+    publications = ['release']
+    dryRun = false
+    publish = true
+    override = false
+    pkg {
+        repo = 'libs'
+        name = artifactName
+        licenses = ['MIT']
+        desc = 'A general purpose finite-state machine written in Kotlin.'
+        websiteUrl = 'https://github.com/vitkhudenko/state_machine'
+        vcsUrl = 'https://github.com/vitkhudenko/state_machine.git'
+        labels = ['state-machine', 'kotlin', 'java', 'android']
+        publicDownloadNumbers = false
+        githubRepo = 'vitkhudenko/state_machine'
+        githubReleaseNotesFile = 'README.md'
+        version {
+            name = libraryVersionName
+            released = new Date()
+        }
+    }
+}
+
