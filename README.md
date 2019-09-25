@@ -4,7 +4,7 @@
 
 At the project level `build.gradle`, add a maven repo pointing to `https://dl.bintray.com/vit-khudenko/libs`, e.g.:
 
-```
+```groovy
 allprojects {
     repositories {
         google()
@@ -16,8 +16,21 @@ allprojects {
 
 At a module level `build.gradle`, add the following dependency:
 
-```
+```groovy
 implementation 'vit.khudenko.android:fsm:0.1.0'
+```
+
+##### Java projects
+
+If your app is written in Java, then, at the module level `build.gradle`, also add `Kotlin Standard 
+Library` dependency.
+Note, there are different types of the library, each corresponding to the Java APIs used by your app.
+As of 2019-09-25, it would be one of the following (assuming the current Kotlin version is `1.3.50`):
+
+```groovy
+implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.3.50'      // for JDK6 APIs
+implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.50' // for JDK7 APIs
+implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.50' // for JDK8 APIs
 ```
 
 ### Usage
@@ -73,6 +86,8 @@ sessionStateMachine.addListener(object : StateMachine.Listener<Session.State> {
 ### Threading
 
 The `StateMachine` implementation is thread-safe. Public API methods are declared as `synchronized`.
+
+The `StateMachine` is a synchronous tool, meaning it neither creates threads, nor uses thread pools or handlers.
 
 ### License
 
