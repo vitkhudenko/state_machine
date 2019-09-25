@@ -20,7 +20,7 @@ At a module level `build.gradle`, add the following dependency:
 implementation 'vit.khudenko.android:fsm:0.1.0'
 ```
 
-##### Java projects
+#### Java projects
 
 If your app is written in Java, then, at the module level `build.gradle`, also add `Kotlin Standard 
 Library` dependency.
