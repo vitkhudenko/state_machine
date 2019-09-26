@@ -20,19 +20,6 @@ At a module level `build.gradle`, add the following dependency:
 implementation 'vit.khudenko.android:fsm:0.1.0'
 ```
 
-#### Java projects
-
-If your app is written in Java, then, at the module level `build.gradle`, also add `Kotlin Standard 
-Library` dependency.
-Note, there are different types of the library, each corresponding to the Java APIs used by your app.
-As of 2019-09-25, it would be one of the following (assuming the current Kotlin version is `1.3.50`):
-
-```groovy
-implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.3.50'      // for JDK6 APIs
-implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.50' // for JDK7 APIs
-implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.50' // for JDK8 APIs
-```
-
 ### Usage
 
 A sample configuration, assuming your app has `Session` class, that defines __specific 
