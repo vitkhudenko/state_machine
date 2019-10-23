@@ -17,7 +17,7 @@ allprojects {
 At a module level `build.gradle`, add the following dependency:
 
 ```groovy
-implementation 'vit.khudenko.android:fsm:0.1.0'
+implementation 'vit.khudenko.android:fsm:0.2.0'
 ```
 
 ### Usage
@@ -49,9 +49,11 @@ val sessionStateMachine = StateMachine.Builder<Session.Event, Session.State>()
     .build()
 ```
 
-Meaning of such sample configuration is that there are 3 possible session states 
-(`ACTIVE`, `INACTIVE` and `FORGOTTEN`) and 3 possible events (`LOGIN`, `LOGOUT` and `LOGOUT_AND_FORGET`).
-And using these events and states there are possible 3 state machine transitions:
+Meaning of the above sample configuration is that:
+* There are 3 possible session states (`ACTIVE`, `INACTIVE` and `FORGOTTEN`).
+* There are 3 possible events (`LOGIN`, `LOGOUT` and `LOGOUT_AND_FORGET`).
+* StateMachine's initial state is `ACTIVE`.
+* There are 3 possible state machine transitions:
 
 |Event              |State path              |
 |-------------------|------------------------|
