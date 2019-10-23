@@ -9,29 +9,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoMoreInteractions
-import org.mockito.junit.MockitoJUnit
-import org.mockito.junit.MockitoRule
+import org.mockito.Mockito.*
 import vit.khudenko.android.fsm.test_utils.Utils
 import vit.khudenko.android.fsm.test_utils.Utils.Event
-import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_1
-import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_2
-import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_3
-import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_4
-import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_5
+import vit.khudenko.android.fsm.test_utils.Utils.Event.*
 import vit.khudenko.android.fsm.test_utils.Utils.State
-import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_A
-import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_B
-import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_C
-import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_D
-import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_E
+import vit.khudenko.android.fsm.test_utils.Utils.State.*
 
 class StateMachineTest {
 
-    @get:Rule
-    val rule: MockitoRule = MockitoJUnit.rule()
+//    @get:Rule
+//    val rule: MockitoRule = MockitoJUnit.rule()
 
     @get:Rule
     val expectedExceptionRule: ExpectedException = ExpectedException.none()
@@ -43,8 +31,10 @@ class StateMachineTest {
         State.values().forEach { state ->
             val stateMachine = StateMachine.Builder<Event, State>()
                 .addTransition(
-                    EVENT_1,
-                    listOf(STATE_A, STATE_B)
+                    StateMachine.Transition(
+                        EVENT_1,
+                        listOf(STATE_A, STATE_B)
+                    )
                 )
                 .setInitialState(state)
                 .build()
@@ -62,16 +52,22 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .addTransition(
-                EVENT_3,
-                listOf(STATE_C, STATE_D, STATE_E)
+                StateMachine.Transition(
+                    EVENT_3,
+                    listOf(STATE_C, STATE_D, STATE_E)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -91,16 +87,22 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .addTransition(
-                EVENT_3,
-                listOf(STATE_C, STATE_D, STATE_E)
+                StateMachine.Transition(
+                    EVENT_3,
+                    listOf(STATE_C, STATE_D, STATE_E)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -120,16 +122,22 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .addTransition(
-                EVENT_3,
-                listOf(STATE_C, STATE_D, STATE_E)
+                StateMachine.Transition(
+                    EVENT_3,
+                    listOf(STATE_C, STATE_D, STATE_E)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -157,16 +165,22 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .addTransition(
-                EVENT_3,
-                listOf(STATE_C, STATE_D, STATE_E)
+                StateMachine.Transition(
+                    EVENT_3,
+                    listOf(STATE_C, STATE_D, STATE_E)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -211,16 +225,20 @@ class StateMachineTest {
     @Test
     fun `starting new transition while ongoing transition is not finished yet should be a consistency violation`() {
         expectedExceptionRule.expect(IllegalStateException::class.java)
-        expectedExceptionRule.expectMessage("can not start a new transition - there is an on-going unfinished transition")
+        expectedExceptionRule.expectMessage("previous transition is still in progress")
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B, STATE_C)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_D)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_D)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -247,12 +265,16 @@ class StateMachineTest {
     fun `starting new transition once ongoing transition has finished should not be a consistency violation (case with 2 transitions)`() {
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B, STATE_C)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_C, STATE_D, STATE_E)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_C, STATE_D, STATE_E)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -282,16 +304,22 @@ class StateMachineTest {
     fun `starting new transition once ongoing transition has finished should not be a consistency violation (case with 3 transitions)`() {
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .addTransition(
-                EVENT_3,
-                listOf(STATE_C, STATE_D)
+                StateMachine.Transition(
+                    EVENT_3,
+                    listOf(STATE_C, STATE_D)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -334,8 +362,10 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -359,8 +389,10 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -385,16 +417,22 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .addTransition(
-                EVENT_3,
-                listOf(STATE_C, STATE_D)
+                StateMachine.Transition(
+                    EVENT_3,
+                    listOf(STATE_C, STATE_D)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -435,12 +473,16 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -477,12 +519,16 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -515,12 +561,16 @@ class StateMachineTest {
     fun `first listener removes second listener during notification`() {
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -556,12 +606,16 @@ class StateMachineTest {
     fun `second listener removes first listener during notification`() {
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .addTransition(
-                EVENT_2,
-                listOf(STATE_B, STATE_C)
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
             )
             .setInitialState(STATE_A)
             .build()
@@ -600,8 +654,10 @@ class StateMachineTest {
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
-                EVENT_1,
-                listOf(STATE_A, STATE_B)
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B)
+                )
             )
             .setInitialState(STATE_A)
             .build()

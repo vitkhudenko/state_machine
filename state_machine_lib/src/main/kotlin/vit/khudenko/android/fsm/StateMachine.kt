@@ -1,7 +1,10 @@
 package vit.khudenko.android.fsm
 
-import java.util.Collections
-import java.util.EnumSet
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashSet
+import kotlin.collections.set
 
 /**
  * `StateMachine` is a general purpose finite-state machine.
@@ -13,16 +16,22 @@ import java.util.EnumSet
  *    val sessionStateMachine = StateMachine.Builder<Session.Event, Session.State>()
  *        .setInitialState(Session.State.ACTIVE)
  *        .addTransition(
- *            Session.Event.LOGIN,
- *            listOf(Session.State.INACTIVE, Session.State.ACTIVE)
+ *            StateMachine.Transition(
+ *                event = Session.Event.LOGIN,
+ *                statePath = listOf(Session.State.INACTIVE, Session.State.ACTIVE)
+ *            )
  *        )
  *        .addTransition(
- *            Session.Event.LOGOUT,
- *            listOf(Session.State.ACTIVE, Session.State.INACTIVE)
+ *            StateMachine.Transition(
+ *                event = Session.Event.LOGOUT,
+ *                statePath = listOf(Session.State.ACTIVE, Session.State.INACTIVE)
+ *            )
  *        )
  *        .addTransition(
- *            Session.Event.LOGOUT_AND_FORGET,
- *            listOf(Session.State.ACTIVE, Session.State.FORGOTTEN)
+ *            StateMachine.Transition(
+ *                event = Session.Event.LOGOUT_AND_FORGET,
+ *                statePath = listOf(Session.State.ACTIVE, Session.State.FORGOTTEN)
+ *            )
  *        )
  *        .build()
  * ```
@@ -55,39 +64,29 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
         private lateinit var initialState: State
 
         /**
-         * Each transition defines its identity as a combination of the [`event`][event] and the starting state
-         * (the first item in the [`statePath`][statePath]). `StateMachine` allows unique transitions only.
+         * A transition defines its identity as a pair of the [`event`][event] and the starting state
+         * (the first item in the [`statePath`][statePath]). `StateMachine` allows unique transitions
+         * only (each transition must have a unique identity).
          *
          * @param event [`Event`][Event].
          * @param statePath a list of states.
          *
          * @return [`StateMachine.Builder`][StateMachine.Builder]
          *
-         * @throws [StateMachineBuilderValidationException] if statePath is empty or has a single state
-         * @throws [StateMachineBuilderValidationException] if statePath does not consist of unique states
          * @throws [StateMachineBuilderValidationException] if a duplicate transition identified (by a combination
          *                                                  of event and starting state)
          */
-        fun addTransition(event: Event, statePath: List<State>): Builder<Event, State> {
-            val statePathCopy = statePath.toMutableList()
-
-            if (statePathCopy.size < 2) {
-                throw StateMachineBuilderValidationException("statePath must have at least 2 states")
-            }
-
-            if (EnumSet.copyOf(statePathCopy).size != statePathCopy.size) {
-                throw StateMachineBuilderValidationException("statePath must consist of unique states")
-            }
-
+        fun addTransition(transition: Transition<Event, State>): Builder<Event, State> {
+            val statePathCopy = transition.statePath.toMutableList()
             val startState = statePathCopy.removeAt(0)
-            val transitionId = Pair(event, startState)
 
-            if (graph.containsKey(transitionId)) {
-                val cause = "statePath with the same start state $startState is already defined for the event $event"
+            if (graph.containsKey(transition.identity)) {
+                val cause = "duplicate transition: a transition for event '" + transition.event +
+                        "' and starting state '" + startState + "' is already present"
                 throw StateMachineBuilderValidationException(cause)
             }
 
-            graph[transitionId] = Collections.unmodifiableList(statePathCopy)
+            graph[transition.identity] = Collections.unmodifiableList(statePathCopy)
 
             return this
         }
@@ -105,15 +104,21 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
         /**
          * @return [`StateMachine`][StateMachine] a newly created instance.
          *
-         * @throws [StateMachineBuilderValidationException] if initial state has not been set
-         * @throws [StateMachineBuilderValidationException] if no transitions have been added
+         * @throws [StateMachineBuilderValidationException] if initial state has not been set (see [setInitialState])
+         * @throws [StateMachineBuilderValidationException] if no transitions have been added (see [addTransition])
          */
         fun build(): StateMachine<Event, State> {
             if (this::initialState.isInitialized.not()) {
-                throw StateMachineBuilderValidationException("initialState must be set")
+                throw StateMachineBuilderValidationException(
+                    "initial state is not defined, make sure to call ${StateMachine::class.java.simpleName}" +
+                            ".${javaClass.simpleName}.setInitialState()"
+                )
             }
             if (graph.isEmpty()) {
-                throw StateMachineBuilderValidationException("at least one transition must be added")
+                throw StateMachineBuilderValidationException(
+                    "no transitions defined, make sure to call ${StateMachine::class.java.simpleName}" +
+                            ".${javaClass.simpleName}.addTransition()"
+                )
             }
             return StateMachine(graph, initialState)
         }
@@ -173,7 +178,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
         val transitionId = Pair(event, currentState)
         val transition = graph[transitionId] ?: return false
 
-        check(!inTransition) { "can not start a new transition - there is an on-going unfinished transition" }
+        check(!inTransition) { "previous transition is still in progress" }
 
         val len = transition.size
         for (i in 0 until len) {
@@ -192,5 +197,34 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
     @Synchronized
     fun getCurrentState(): State {
         return currentState
+    }
+
+    /**
+     * A transition defines its identity as a pair of the [`event`][event] and the starting state
+     * (the first item in the [`statePath`][statePath]). `StateMachine` allows unique transitions
+     * only (each transition must have a unique identity).
+     *
+     * @param event [`Event`][Event] - triggering event for this transition.
+     * @param statePath a list of states for this transition.
+     *                  First item is a starting state for the transition.
+     *                  Must have at least two items, and all items must be unique.
+     *
+     * @throws [IllegalArgumentException] if statePath is empty or has a single item
+     * @throws [IllegalArgumentException] if statePath does not consist of unique items
+     *
+     * @param [Event] event parameter of enum type.
+     * @param [State] state parameter of enum type.
+     */
+    class Transition<Event : Enum<Event>, State : Enum<State>>(
+        val event: Event,
+        val statePath: List<State>
+    ) {
+        val identity: Pair<Event, State>
+
+        init {
+            require(statePath.size > 1) { "statePath must contain at least 2 items" }
+            require(EnumSet.copyOf(statePath).size == statePath.size) { "statePath must consist of unique items" }
+            identity = Pair(event, statePath.first())
+        }
     }
 }

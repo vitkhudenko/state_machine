@@ -29,16 +29,22 @@ to your app__ events and states (`Session.Event` and `Session.State` enums):
 val sessionStateMachine = StateMachine.Builder<Session.Event, Session.State>()
     .setInitialState(Session.State.ACTIVE)
     .addTransition(
-        Session.Event.LOGIN,
-        listOf(Session.State.INACTIVE, Session.State.ACTIVE)
+        StateMachine.Transition(
+            event = Session.Event.LOGIN,
+            statePath = listOf(Session.State.INACTIVE, Session.State.ACTIVE)
+        )
     )
     .addTransition(
-        Session.Event.LOGOUT,
-        listOf(Session.State.ACTIVE, Session.State.INACTIVE)
+        StateMachine.Transition(
+            event = Session.Event.LOGOUT,
+            statePath = listOf(Session.State.ACTIVE, Session.State.INACTIVE)
+        )
     )
     .addTransition(
-        Session.Event.LOGOUT_AND_FORGET,
-        listOf(Session.State.ACTIVE, Session.State.FORGOTTEN)
+        StateMachine.Transition(
+            event = Session.Event.LOGOUT_AND_FORGET,
+            statePath = listOf(Session.State.ACTIVE, Session.State.FORGOTTEN)
+        )
     )
     .build()
 ```
