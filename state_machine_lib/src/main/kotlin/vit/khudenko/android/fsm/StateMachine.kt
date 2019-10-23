@@ -44,7 +44,7 @@ import kotlin.collections.set
  * @see [StateMachine.Builder]
  */
 class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor(
-    private val graph: Map<Pair<Event, State>, List<State>>,
+    private val graph: Map<Transition.Identity<Event, State>, List<State>>,
     initialState: State
 ) {
 
@@ -60,7 +60,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
      */
     class Builder<Event : Enum<Event>, State : Enum<State>> {
 
-        private val graph = HashMap<Pair<Event, State>, List<State>>()
+        private val graph = HashMap<Transition.Identity<Event, State>, List<State>>()
         private lateinit var initialState: State
 
         /**
@@ -106,6 +106,8 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
          *
          * @throws [StateMachineBuilderValidationException] if initial state has not been set (see [setInitialState])
          * @throws [StateMachineBuilderValidationException] if no transitions have been added (see [addTransition])
+         * @throws [StateMachineBuilderValidationException] if no transition defined with starting state matching
+         *                                                  the initial state
          */
         fun build(): StateMachine<Event, State> {
             if (this::initialState.isInitialized.not()) {
@@ -118,6 +120,11 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
                 throw StateMachineBuilderValidationException(
                     "no transitions defined, make sure to call ${StateMachine::class.java.simpleName}" +
                             ".${javaClass.simpleName}.addTransition()"
+                )
+            }
+            if (graph.keys.map { transitionIdentity -> transitionIdentity.state }.contains(initialState).not()) {
+                throw StateMachineBuilderValidationException(
+                    "no transition defined with start state matching the initial state ($initialState)"
                 )
             }
             return StateMachine(graph, initialState)
@@ -171,14 +178,14 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
      * @return flag of whether the event was actually consumed (meaning moving to a new state) or ignored.
      *
      * @throws [IllegalStateException] if there is a matching transition for this event and current state,
-     * but there is still an on-going unfinished transition.
+     * but there is still an unfinished transition in progress.
      */
     @Synchronized
     fun consumeEvent(event: Event): Boolean {
-        val transitionId = Pair(event, currentState)
-        val transition = graph[transitionId] ?: return false
+        val transitionIdentity = Transition.Identity(event, currentState)
+        val transition = graph[transitionIdentity] ?: return false
 
-        check(!inTransition) { "previous transition is still in progress" }
+        check(!inTransition) { "there is a transition which is still in progress" }
 
         val len = transition.size
         for (i in 0 until len) {
@@ -219,12 +226,17 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
         val event: Event,
         val statePath: List<State>
     ) {
-        val identity: Pair<Event, State>
+        val identity: Identity<Event, State>
 
         init {
             require(statePath.size > 1) { "statePath must contain at least 2 items" }
             require(EnumSet.copyOf(statePath).size == statePath.size) { "statePath must consist of unique items" }
-            identity = Pair(event, statePath.first())
+            identity = Identity(event, statePath.first())
         }
+
+        data class Identity<Event : Enum<Event>, State : Enum<State>>(
+            val event: Event,
+            val state: State
+        )
     }
 }

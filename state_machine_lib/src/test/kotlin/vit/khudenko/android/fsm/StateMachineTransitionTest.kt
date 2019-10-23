@@ -34,7 +34,7 @@ class StateMachineTransitionTest {
             )
         ).forEach { transition ->
             assertEquals(
-                transition.event to transition.statePath.first(),
+                StateMachine.Transition.Identity(transition.event, transition.statePath.first()),
                 transition.identity
             )
         }

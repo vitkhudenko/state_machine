@@ -96,6 +96,23 @@ class StateMachineBuilderTest {
     }
 
     @Test
+    fun `builder should fail if there is no transition defined with start state matching the initial state`() {
+        val transition = StateMachine.Transition(EVENT_1, listOf(STATE_A, STATE_B))
+        val initialState = STATE_C
+
+        with(expectedExceptionRule) {
+            expect(StateMachineBuilderValidationException::class.java)
+            expectMessage("no transition defined with start state matching the initial state ($initialState)")
+        }
+
+        StateMachine.Builder<Event, State>()
+            .setInitialState(initialState)
+            .addTransition(transition)
+            .build()
+    }
+
+
+    @Test
     fun `builder should successfully create state machine`() {
         val transition1 = StateMachine.Transition(EVENT_1, listOf(STATE_A, STATE_B))
         val transition2 = StateMachine.Transition(EVENT_2, listOf(STATE_B, STATE_C))

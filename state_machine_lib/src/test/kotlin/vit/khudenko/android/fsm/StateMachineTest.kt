@@ -18,9 +18,6 @@ import vit.khudenko.android.fsm.test_utils.Utils.State.*
 
 class StateMachineTest {
 
-//    @get:Rule
-//    val rule: MockitoRule = MockitoJUnit.rule()
-
     @get:Rule
     val expectedExceptionRule: ExpectedException = ExpectedException.none()
 
@@ -28,22 +25,22 @@ class StateMachineTest {
     fun `initial state should be set as expected`() {
         val listener: StateMachine.Listener<State> = mock()
 
-        State.values().forEach { state ->
-            val stateMachine = StateMachine.Builder<Event, State>()
-                .addTransition(
-                    StateMachine.Transition(
-                        EVENT_1,
-                        listOf(STATE_A, STATE_B)
-                    )
+        val state = STATE_A
+
+        val stateMachine = StateMachine.Builder<Event, State>()
+            .addTransition(
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(state, STATE_B)
                 )
-                .setInitialState(state)
-                .build()
+            )
+            .setInitialState(state)
+            .build()
 
-            stateMachine.addListener(listener)
+        stateMachine.addListener(listener)
 
-            assertEquals(state, stateMachine.getCurrentState())
-            verify(listener, never()).onStateChanged(anyOrNull(), anyOrNull())
-        }
+        assertEquals(state, stateMachine.getCurrentState())
+        verify(listener, never()).onStateChanged(anyOrNull(), anyOrNull())
     }
 
     @Test
@@ -225,7 +222,7 @@ class StateMachineTest {
     @Test
     fun `starting new transition while ongoing transition is not finished yet should be a consistency violation`() {
         expectedExceptionRule.expect(IllegalStateException::class.java)
-        expectedExceptionRule.expectMessage("previous transition is still in progress")
+        expectedExceptionRule.expectMessage("there is a transition which is still in progress")
 
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
