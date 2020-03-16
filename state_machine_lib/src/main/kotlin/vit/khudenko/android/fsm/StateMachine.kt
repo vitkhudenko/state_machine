@@ -214,10 +214,10 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
      * @param event [`Event`][Event] - triggering event for this transition.
      * @param statePath a list of states for this transition.
      *                  First item is a starting state for the transition.
-     *                  Must have at least two items, and all items must be unique.
+     *                  Must have at least two items. Must not have repeating items in a row.
      *
      * @throws [IllegalArgumentException] if statePath is empty or has a single item
-     * @throws [IllegalArgumentException] if statePath does not consist of unique items
+     * @throws [IllegalArgumentException] if statePath has repeating items in a row
      *
      * @param [Event] event parameter of enum type.
      * @param [State] state parameter of enum type.
@@ -230,7 +230,9 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
 
         init {
             require(statePath.size > 1) { "statePath must contain at least 2 items" }
-            require(EnumSet.copyOf(statePath).size == statePath.size) { "statePath must consist of unique items" }
+            require(statePath.zipWithNext().none { (s1, s2) -> s1 == s2 }) {
+                "statePath must not have repeating items in a row"
+            }
             identity = Identity(event, statePath.first())
         }
 
