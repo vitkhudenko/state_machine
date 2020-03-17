@@ -4,11 +4,8 @@ import com.nhaarman.mockitokotlin2.anyOrNull
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verifyZeroInteractions
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Rule
+import org.junit.Assert.*
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import org.mockito.Mockito.*
 import vit.khudenko.android.fsm.test_utils.Utils
 import vit.khudenko.android.fsm.test_utils.Utils.Event
@@ -17,9 +14,6 @@ import vit.khudenko.android.fsm.test_utils.Utils.State
 import vit.khudenko.android.fsm.test_utils.Utils.State.*
 
 class StateMachineTest {
-
-    @get:Rule
-    val expectedExceptionRule: ExpectedException = ExpectedException.none()
 
     @Test
     fun `initial state should be set as expected`() {
@@ -157,6 +151,58 @@ class StateMachineTest {
     }
 
     @Test
+    fun `same transition should happen, if the same event is fired again`() {
+        val listener: StateMachine.Listener<State> = mock()
+
+        val stateMachine = StateMachine.Builder<Event, State>()
+            .addTransition(
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_A, STATE_B, STATE_A)
+                )
+            )
+            .addTransition(
+                StateMachine.Transition(
+                    EVENT_1,
+                    listOf(STATE_B, STATE_A)
+                )
+            )
+            .addTransition(
+                StateMachine.Transition(
+                    EVENT_2,
+                    listOf(STATE_B, STATE_C)
+                )
+            )
+            .addTransition(
+                StateMachine.Transition(
+                    EVENT_3,
+                    listOf(STATE_C, STATE_D, STATE_E)
+                )
+            )
+            .setInitialState(STATE_A)
+            .build()
+
+        stateMachine.addListener(listener)
+
+        // verify transition STATE_A -> STATE_B -> STATE_A happens
+        Utils.checkEventIsConsumed(
+            stateMachine,
+            listOf(listener),
+            EVENT_1,
+            listOf(STATE_A, STATE_B, STATE_A)
+        )
+
+        // verify same transition happens again
+        reset(listener)
+        Utils.checkEventIsConsumed(
+            stateMachine,
+            listOf(listener),
+            EVENT_1,
+            listOf(STATE_A, STATE_B, STATE_A)
+        )
+    }
+
+    @Test
     fun `several transitions and final state`() {
         val listener: StateMachine.Listener<State> = mock()
 
@@ -221,9 +267,6 @@ class StateMachineTest {
 
     @Test
     fun `starting new transition while ongoing transition is not finished yet should be a consistency violation`() {
-        expectedExceptionRule.expect(IllegalStateException::class.java)
-        expectedExceptionRule.expectMessage("there is a transition which is still in progress")
-
         val stateMachine = StateMachine.Builder<Event, State>()
             .addTransition(
                 StateMachine.Transition(
@@ -252,10 +295,12 @@ class StateMachineTest {
 
         stateMachine.addListener(listener)
 
-        // The EVENT_2, triggered from the listener.onStateChanged(STATE_A, STATE_B),
-        // breaks state machine consistency, so it should crash. Otherwise the second transition (STATE_B to STATE_D)
-        // would start while the first transition is still in the intermediate state STATE_B.
-        stateMachine.consumeEvent(EVENT_1)
+        assertThrows("there is a transition which is still in progress", IllegalStateException::class.java) {
+            // The EVENT_2, triggered from the listener.onStateChanged(STATE_A, STATE_B), breaks state machine
+            // consistency, so it should crash. Otherwise the second transition (STATE_B to STATE_D)
+            // would start while the first transition is still in the intermediate state STATE_B.
+            stateMachine.consumeEvent(EVENT_1)
+        }
     }
 
     @Test
