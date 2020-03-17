@@ -9,7 +9,7 @@ afterEvaluate {
 
 apply plugin: 'kotlin-android'
 
-def libraryVersionName = "0.2.0"
+def libraryVersionName = "0.3.0"
 def artifactName = 'StateMachine'
 
 android {
