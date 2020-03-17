@@ -1,13 +1,17 @@
 package vit.khudenko.android.fsm
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_1
 import vit.khudenko.android.fsm.test_utils.Utils.State
-import vit.khudenko.android.fsm.test_utils.Utils.State.*
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_A
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_B
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_C
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_D
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_E
+import vit.khudenko.android.fsm.test_utils.assertThrows
 import java.util.Optional
 
 @RunWith(Parameterized::class)
@@ -75,7 +79,7 @@ class StateMachineTransitionTest(
     fun `test construction`() {
         if (expectedExceptionOptional.isPresent) {
             expectedExceptionOptional.get().also { exception ->
-                assertThrows(exception.message, exception.javaClass) { StateMachine.Transition(EVENT_1, statePath) }
+                assertThrows(exception.javaClass, exception.message) { StateMachine.Transition(EVENT_1, statePath) }
             }
         } else {
             StateMachine.Transition(EVENT_1, statePath).also { transition ->

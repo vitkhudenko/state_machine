@@ -4,14 +4,27 @@ import com.nhaarman.mockitokotlin2.anyOrNull
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verifyZeroInteractions
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.never
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoMoreInteractions
 import vit.khudenko.android.fsm.test_utils.Utils
 import vit.khudenko.android.fsm.test_utils.Utils.Event
-import vit.khudenko.android.fsm.test_utils.Utils.Event.*
+import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_1
+import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_2
+import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_3
+import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_4
+import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_5
 import vit.khudenko.android.fsm.test_utils.Utils.State
-import vit.khudenko.android.fsm.test_utils.Utils.State.*
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_A
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_B
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_C
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_D
+import vit.khudenko.android.fsm.test_utils.Utils.State.STATE_E
+import vit.khudenko.android.fsm.test_utils.assertThrows
 
 class StateMachineTest {
 
@@ -295,7 +308,7 @@ class StateMachineTest {
 
         stateMachine.addListener(listener)
 
-        assertThrows("there is a transition which is still in progress", IllegalStateException::class.java) {
+        assertThrows(IllegalStateException::class.java, "there is a transition which is still in progress") {
             // The EVENT_2, triggered from the listener.onStateChanged(STATE_A, STATE_B), breaks state machine
             // consistency, so it should crash. Otherwise the second transition (STATE_B to STATE_D)
             // would start while the first transition is still in the intermediate state STATE_B.
