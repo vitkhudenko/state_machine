@@ -12,6 +12,7 @@ import org.mockito.Mockito.reset
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 import vit.khudenko.android.fsm.test_utils.Utils
+import vit.khudenko.android.fsm.test_utils.Utils.Companion.eventItem
 import vit.khudenko.android.fsm.test_utils.Utils.Event
 import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_1
 import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_2
@@ -30,11 +31,11 @@ class StateMachineTest {
 
     @Test
     fun `initial state should be set as expected`() {
-        val listener: StateMachine.Listener<State> = mock()
+        val listener: StateMachine.Listener<State, Unit> = mock()
 
         val state = STATE_A
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, Unit>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -47,14 +48,14 @@ class StateMachineTest {
         stateMachine.addListener(listener)
 
         assertEquals(state, stateMachine.getCurrentState())
-        verify(listener, never()).onStateChanged(anyOrNull(), anyOrNull())
+        verify(listener, never()).onStateChanged(anyOrNull(), anyOrNull(), anyOrNull())
     }
 
     @Test
     fun `out-of-config events should be ignored`() {
-        val listener: StateMachine.Listener<State> = mock()
+        val listener: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -81,15 +82,20 @@ class StateMachineTest {
         Utils.checkEventsAreIgnored(
             stateMachine,
             listener,
-            listOf(EVENT_4, EVENT_5)
+            listOf(
+                eventItem(EVENT_4),
+                eventItem(EVENT_4, "event payload"),
+                eventItem(EVENT_5),
+                eventItem(EVENT_5, "event payload")
+            )
         )
     }
 
     @Test
     fun `in-config events, that do not match the current state of the state machine, should be ignored`() {
-        val listener: StateMachine.Listener<State> = mock()
+        val listener: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -116,15 +122,20 @@ class StateMachineTest {
         Utils.checkEventsAreIgnored(
             stateMachine,
             listener,
-            listOf(EVENT_2, EVENT_3)
+            listOf(
+                eventItem(EVENT_2),
+                eventItem(EVENT_2, "event payload"),
+                eventItem(EVENT_3),
+                eventItem(EVENT_3, "event payload")
+            )
         )
     }
 
     @Test
     fun `same transition should not happen, if the same event is fired again`() {
-        val listener: StateMachine.Listener<State> = mock()
+        val listener: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -152,22 +163,25 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B)
         )
 
-        Utils.checkEventIsIgnored(
+        Utils.checkEventsAreIgnored(
             stateMachine,
             listener,
-            EVENT_1
+            listOf(
+                eventItem(EVENT_1),
+                eventItem(EVENT_1, "event payload")
+            )
         )
     }
 
     @Test
     fun `same transition should happen, if the same event is fired again`() {
-        val listener: StateMachine.Listener<State> = mock()
+        val listener: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -201,25 +215,32 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B, STATE_A)
         )
 
-        // verify same transition happens again
-        reset(listener)
-        Utils.checkEventIsConsumed(
-            stateMachine,
-            listOf(listener),
-            EVENT_1,
-            listOf(STATE_A, STATE_B, STATE_A)
-        )
+        // verify same transition happens again (regardless of event payload)
+        listOf(
+            eventItem(EVENT_1),
+            eventItem(EVENT_1, ""),
+            eventItem(EVENT_1),
+            eventItem(EVENT_1, "event payload")
+        ).forEach { eventItem ->
+            reset(listener)
+            Utils.checkEventIsConsumed(
+                stateMachine,
+                listOf(listener),
+                eventItem,
+                listOf(STATE_A, STATE_B, STATE_A)
+            )
+        }
     }
 
     @Test
     fun `several transitions and final state`() {
-        val listener: StateMachine.Listener<State> = mock()
+        val listener: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -244,13 +265,13 @@ class StateMachineTest {
         stateMachine.addListener(listener)
 
         assertEquals(STATE_A, stateMachine.getCurrentState())
-        verify(listener, never()).onStateChanged(anyOrNull(), anyOrNull())
+        verify(listener, never()).onStateChanged(anyOrNull(), anyOrNull(), anyOrNull())
 
         // verify transition from STATE_A to STATE_B happens
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B)
         )
 
@@ -258,7 +279,7 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener),
-            EVENT_2,
+            eventItem(EVENT_2),
             listOf(STATE_B, STATE_C)
         )
 
@@ -266,21 +287,21 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener),
-            EVENT_3,
+            eventItem(EVENT_3),
             listOf(STATE_C, STATE_D, STATE_E)
         )
 
-        // verify any further events should are ignored as state machine is its final state
+        // verify any further events should are ignored as state machine is at its final state
         Utils.checkEventsAreIgnored(
             stateMachine,
             listener,
-            Event.values().asList()
+            Event.values().asList().map { event -> eventItem(event) }
         )
     }
 
     @Test
     fun `starting new transition while ongoing transition is not finished yet should be a consistency violation`() {
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -296,10 +317,10 @@ class StateMachineTest {
             .setInitialState(STATE_A)
             .build()
 
-        val listener: StateMachine.Listener<State> = mock {
+        val listener: StateMachine.Listener<State, String> = mock {
             // listener will fire EVENT_2 as soon as the intermediate state STATE_B
             // in the first transition (STATE_A - STATE_B - STATE_C) is reached
-            on { onStateChanged(STATE_A, STATE_B) } doAnswer {
+            on { onStateChanged(STATE_A, STATE_B, null) } doAnswer {
                 assertEquals(STATE_B, stateMachine.getCurrentState())
                 assertTrue(stateMachine.consumeEvent(EVENT_2))
                 Unit
@@ -318,7 +339,7 @@ class StateMachineTest {
 
     @Test
     fun `starting new transition once ongoing transition has finished should not be a consistency violation (case with 2 transitions)`() {
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -334,10 +355,10 @@ class StateMachineTest {
             .setInitialState(STATE_A)
             .build()
 
-        val listener: StateMachine.Listener<State> = mock {
+        val listener: StateMachine.Listener<State, String> = mock {
             // listener will fire EVENT_2 as soon as the final state STATE_C in the first
             // transition (STATE_A - STATE_B - STATE_C) is reached
-            on { onStateChanged(STATE_B, STATE_C) } doAnswer {
+            on { onStateChanged(STATE_B, STATE_C, null) } doAnswer {
                 assertEquals(STATE_C, stateMachine.getCurrentState())
                 assertTrue(stateMachine.consumeEvent(EVENT_2))
                 Unit
@@ -350,14 +371,14 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B, STATE_C, STATE_D, STATE_E)
         )
     }
 
     @Test
     fun `starting new transition once ongoing transition has finished should not be a consistency violation (case with 3 transitions)`() {
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -379,17 +400,17 @@ class StateMachineTest {
             .setInitialState(STATE_A)
             .build()
 
-        val listener: StateMachine.Listener<State> = mock {
+        val listener: StateMachine.Listener<State, String> = mock {
             // listener will fire EVENT_2 as soon as the final state STATE_B in the first
             // transition (STATE_A - STATE_B) is reached
-            on { onStateChanged(STATE_A, STATE_B) } doAnswer {
+            on { onStateChanged(STATE_A, STATE_B, null) } doAnswer {
                 assertEquals(STATE_B, stateMachine.getCurrentState())
                 assertTrue(stateMachine.consumeEvent(EVENT_2))
                 Unit
             }
             // listener will fire EVENT_3 as soon as the final state STATE_C in the second
             // transition (STATE_B - STATE_C) is reached
-            on { onStateChanged(STATE_B, STATE_C) } doAnswer {
+            on { onStateChanged(STATE_B, STATE_C, null) } doAnswer {
                 assertEquals(STATE_C, stateMachine.getCurrentState())
                 assertTrue(stateMachine.consumeEvent(EVENT_3))
                 Unit
@@ -405,17 +426,17 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B, STATE_C, STATE_D)
         )
     }
 
     @Test
     fun `both listeners should be notified as expected`() {
-        val listener1: StateMachine.Listener<State> = mock()
-        val listener2: StateMachine.Listener<State> = mock()
+        val listener1: StateMachine.Listener<State, String> = mock()
+        val listener2: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -433,16 +454,16 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener1, listener2),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B)
         )
     }
 
     @Test
     fun `adding same listener twice should be a no op`() {
-        val listener: StateMachine.Listener<State> = mock()
+        val listener: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -460,17 +481,17 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B)
         )
     }
 
     @Test
     fun `explicit call to remove one of the two listeners`() {
-        val listener1: StateMachine.Listener<State> = mock()
-        val listener2: StateMachine.Listener<State> = mock()
+        val listener1: StateMachine.Listener<State, String> = mock()
+        val listener2: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -501,7 +522,7 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener1, listener2),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B)
         )
 
@@ -509,7 +530,7 @@ class StateMachineTest {
         stateMachine.removeListener(listener1)
 
         assertTrue(stateMachine.consumeEvent(EVENT_2))
-        verify(listener2).onStateChanged(STATE_B, STATE_C)
+        verify(listener2).onStateChanged(STATE_B, STATE_C, null)
         verifyNoMoreInteractions(listener1, listener2)
 
         // leave no listeners attached to state machine
@@ -523,10 +544,10 @@ class StateMachineTest {
 
     @Test
     fun `first listener removes itself during notification`() {
-        val listener1: StateMachine.Listener<State> = mock()
-        val listener2: StateMachine.Listener<State> = mock()
+        val listener1: StateMachine.Listener<State, String> = mock()
+        val listener2: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -542,11 +563,10 @@ class StateMachineTest {
             .setInitialState(STATE_A)
             .build()
 
-
         doAnswer {
             // listener1 will remove itself as soon as notified
             stateMachine.removeListener(listener1)
-        }.`when`(listener1).onStateChanged(STATE_A, STATE_B)
+        }.`when`(listener1).onStateChanged(STATE_A, STATE_B, null)
 
         with(stateMachine) {
             addListener(listener1)
@@ -557,22 +577,22 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener1, listener2),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B)
         )
 
         // verify state changed and only remaining listener2 is notified
         assertTrue(stateMachine.consumeEvent(EVENT_2))
-        verify(listener2).onStateChanged(STATE_B, STATE_C)
+        verify(listener2).onStateChanged(STATE_B, STATE_C, null)
         verifyNoMoreInteractions(listener1, listener2)
     }
 
     @Test
     fun `second listener removes itself during notification`() {
-        val listener1: StateMachine.Listener<State> = mock()
-        val listener2: StateMachine.Listener<State> = mock()
+        val listener1: StateMachine.Listener<State, String> = mock()
+        val listener2: StateMachine.Listener<State, String> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -591,7 +611,7 @@ class StateMachineTest {
         doAnswer {
             // listener2 will remove itself as soon as notified
             stateMachine.removeListener(listener2)
-        }.`when`(listener1).onStateChanged(STATE_A, STATE_B)
+        }.`when`(listener1).onStateChanged(STATE_A, STATE_B, null)
 
         with(stateMachine) {
             addListener(listener1)
@@ -602,19 +622,19 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener1, listener2),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B)
         )
 
         // verify state changed and only remaining listener1 is notified
         assertTrue(stateMachine.consumeEvent(EVENT_2))
-        verify(listener1).onStateChanged(STATE_B, STATE_C)
+        verify(listener1).onStateChanged(STATE_B, STATE_C, null)
         verifyNoMoreInteractions(listener1, listener2)
     }
 
     @Test
     fun `first listener removes second listener during notification`() {
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -630,11 +650,11 @@ class StateMachineTest {
             .setInitialState(STATE_A)
             .build()
 
-        val listener2: StateMachine.Listener<State> = mock()
-        val listener1: StateMachine.Listener<State> = mock {
+        val listener2: StateMachine.Listener<State, String> = mock()
+        val listener1: StateMachine.Listener<State, String> = mock {
             on {
                 // listener1 will remove listener2 as soon as notified
-                onStateChanged(STATE_A, STATE_B)
+                onStateChanged(STATE_A, STATE_B, null)
             } doAnswer { stateMachine.removeListener(listener2) }
         }
 
@@ -647,19 +667,19 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener1, listener2),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B)
         )
 
         // verify state changed and only remaining listener1 is notified
         assertTrue(stateMachine.consumeEvent(EVENT_2))
-        verify(listener1).onStateChanged(STATE_B, STATE_C)
+        verify(listener1).onStateChanged(STATE_B, STATE_C, null)
         verifyNoMoreInteractions(listener1, listener2)
     }
 
     @Test
     fun `second listener removes first listener during notification`() {
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, String>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,
@@ -675,11 +695,11 @@ class StateMachineTest {
             .setInitialState(STATE_A)
             .build()
 
-        val listener1: StateMachine.Listener<State> = mock()
-        val listener2: StateMachine.Listener<State> = mock {
+        val listener1: StateMachine.Listener<State, String> = mock()
+        val listener2: StateMachine.Listener<State, String> = mock {
             on {
                 // listener2 will remove listener1 as soon as notified
-                onStateChanged(STATE_A, STATE_B)
+                onStateChanged(STATE_A, STATE_B, null)
             } doAnswer { stateMachine.removeListener(listener1) }
         }
 
@@ -692,22 +712,22 @@ class StateMachineTest {
         Utils.checkEventIsConsumed(
             stateMachine,
             listOf(listener1, listener2),
-            EVENT_1,
+            eventItem(EVENT_1),
             listOf(STATE_A, STATE_B)
         )
 
         // verify state changed and only remaining listener2 is notified as expected
         assertTrue(stateMachine.consumeEvent(EVENT_2))
-        verify(listener2).onStateChanged(STATE_B, STATE_C)
+        verify(listener2).onStateChanged(STATE_B, STATE_C, null)
         verifyNoMoreInteractions(listener1, listener2)
     }
 
     @Test
     fun `remove all listeners via removeAllListeners()`() {
-        val listener1: StateMachine.Listener<State> = mock()
-        val listener2: StateMachine.Listener<State> = mock()
+        val listener1: StateMachine.Listener<State, Unit> = mock()
+        val listener2: StateMachine.Listener<State, Unit> = mock()
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, Unit>()
             .addTransition(
                 StateMachine.Transition(
                     EVENT_1,

@@ -20,7 +20,7 @@ class StateMachineBuilderTest {
             StateMachineBuilderValidationException::class.java,
             "no transitions defined, make sure to call StateMachine.Builder.addTransition()"
         ) {
-            StateMachine.Builder<Event, State>()
+            StateMachine.Builder<Event, State, Unit>()
                 .setInitialState(STATE_A)
                 .build()
         }
@@ -34,7 +34,7 @@ class StateMachineBuilderTest {
             StateMachineBuilderValidationException::class.java,
             "initial state is not defined, make sure to call StateMachine.Builder.setInitialState()"
         ) {
-            StateMachine.Builder<Event, State>()
+            StateMachine.Builder<Event, State, Unit>()
                 .addTransition(transition)
                 .build()
         }
@@ -52,7 +52,7 @@ class StateMachineBuilderTest {
             StateMachineBuilderValidationException::class.java,
             getCauseForDuplicateStartState(event, state)
         ) {
-            StateMachine.Builder<Event, State>()
+            StateMachine.Builder<Event, State, Unit>()
                 .addTransition(transition1)
                 .addTransition(transition2)
         }
@@ -70,7 +70,7 @@ class StateMachineBuilderTest {
             StateMachineBuilderValidationException::class.java,
             getCauseForDuplicateStartState(event, state)
         ) {
-            StateMachine.Builder<Event, State>()
+            StateMachine.Builder<Event, State, Unit>()
                 .addTransition(transition1)
                 .addTransition(transition2)
         }
@@ -88,7 +88,7 @@ class StateMachineBuilderTest {
             StateMachineBuilderValidationException::class.java,
             getCauseForDuplicateStartState(event, state)
         ) {
-            StateMachine.Builder<Event, State>()
+            StateMachine.Builder<Event, State, Unit>()
                 .addTransition(transition1)
                 .addTransition(transition2)
         }
@@ -103,7 +103,7 @@ class StateMachineBuilderTest {
             StateMachineBuilderValidationException::class.java,
             "no transition defined with start state matching the initial state ($initialState)"
         ) {
-            StateMachine.Builder<Event, State>()
+            StateMachine.Builder<Event, State, Unit>()
                 .setInitialState(initialState)
                 .addTransition(transition)
                 .build()
@@ -119,7 +119,7 @@ class StateMachineBuilderTest {
 
         val state = STATE_A
 
-        val stateMachine = StateMachine.Builder<Event, State>()
+        val stateMachine = StateMachine.Builder<Event, State, Unit>()
             .addTransition(transition1)
             .addTransition(transition2)
             .addTransition(transition3)
