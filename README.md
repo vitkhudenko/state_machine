@@ -17,7 +17,7 @@ allprojects {
 At a module level `build.gradle`, add the following dependency:
 
 ```groovy
-implementation 'vit.khudenko.android:fsm:0.3.0'
+implementation 'vit.khudenko.android:fsm:0.4.0'
 ```
 
 ### Usage
@@ -26,7 +26,7 @@ A sample configuration, assuming your app has `Session` class, that defines __sp
 to your app__ events and states (`Session.Event` and `Session.State` enums):
 
 ```kotlin
-val sessionStateMachine = StateMachine.Builder<Session.Event, Session.State>()
+val sessionStateMachine = StateMachine.Builder<Session.Event, Session.State, Unit>()
     .setInitialState(Session.State.ACTIVE)
     .addTransition(
         StateMachine.Transition(
@@ -71,11 +71,30 @@ sessionStateMachine.consumeEvent(Session.Event.LOGOUT)
 State changes are propagated via `StateMachine.Listener`.
 
 ```kotlin
-sessionStateMachine.addListener(object : StateMachine.Listener<Session.State> {
-    override fun onStateChanged(oldState: Session.State, newState: Session.State) {
+sessionStateMachine.addListener(object : StateMachine.Listener<Session.State, Unit> {
+    override fun onStateChanged(oldState: Session.State, newState: Session.State, eventData: Unit?) {
         // do something
     }
 })
+```
+
+#### Event payloads
+
+Starting from v0.4.0 `StateMachine` supports event payloads, i.e. in addition to bare `enum` instances serving as events the library supports event extension/payloads:
+
+```kotlin
+data class MyEventPayload(val value: Int)
+
+val stateMachine: StateMachine<MyEvent, MyState, MyEventPayload> // instantiation is omitted for brevity
+
+stateMachine.addListener(object : StateMachine.Listener<MyState, MyEventPayload> {
+    override fun onStateChanged(oldState: MyState, newState: MyState, eventData: MyEventPayload?) {
+        // do something
+    }
+})
+
+stateMachine.consumeEvent(MyEvent.A) // equivalent to stateMachine.consumeEvent(MyEvent.A, null)
+stateMachine.consumeEvent(MyEvent.B, MyEventPayload(47))
 ```
 
 ### Threading

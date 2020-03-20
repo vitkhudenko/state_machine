@@ -1,9 +1,6 @@
 package vit.khudenko.android.fsm
 
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.LinkedHashSet
+import java.util.Collections
 import kotlin.collections.set
 
 /**
@@ -40,10 +37,11 @@ import kotlin.collections.set
  *
  * @param [Event] event parameter of enum type.
  * @param [State] state parameter of enum type.
+ * @param [EventPayload] event payload parameter.
  *
  * @see [StateMachine.Builder]
  */
-class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor(
+class StateMachine<Event : Enum<Event>, State : Enum<State>, EventPayload> private constructor(
     private val graph: Map<Transition.Identity<Event, State>, List<State>>,
     initialState: State
 ) {
@@ -51,14 +49,14 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
     /**
      * A callback to communicate state changes of a [`StateMachine`][StateMachine].
      */
-    interface Listener<State> {
-        fun onStateChanged(oldState: State, newState: State)
+    interface Listener<State, EventPayload> {
+        fun onStateChanged(oldState: State, newState: State, eventPayload: EventPayload?)
     }
 
     /**
      * Builder is not thread-safe.
      */
-    class Builder<Event : Enum<Event>, State : Enum<State>> {
+    class Builder<Event : Enum<Event>, State : Enum<State>, EventPayload> {
 
         private val graph = HashMap<Transition.Identity<Event, State>, List<State>>()
         private lateinit var initialState: State
@@ -76,7 +74,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
          * @throws [StateMachineBuilderValidationException] if a duplicate transition identified (by a combination
          *                                                  of event and starting state)
          */
-        fun addTransition(transition: Transition<Event, State>): Builder<Event, State> {
+        fun addTransition(transition: Transition<Event, State>): Builder<Event, State, EventPayload> {
             val statePathCopy = transition.statePath.toMutableList()
             val startState = statePathCopy.removeAt(0)
 
@@ -96,7 +94,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
          *
          * @return [`StateMachine.Builder`][StateMachine.Builder]
          */
-        fun setInitialState(state: State): Builder<Event, State> {
+        fun setInitialState(state: State): Builder<Event, State, EventPayload> {
             this.initialState = state
             return this
         }
@@ -109,7 +107,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
          * @throws [StateMachineBuilderValidationException] if no transition defined with starting state matching
          *                                                  the initial state
          */
-        fun build(): StateMachine<Event, State> {
+        fun build(): StateMachine<Event, State, EventPayload> {
             if (this::initialState.isInitialized.not()) {
                 throw StateMachineBuilderValidationException(
                     "initial state is not defined, make sure to call ${StateMachine::class.java.simpleName}" +
@@ -132,7 +130,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
     }
 
     private var currentState: State = initialState
-    private val listeners: LinkedHashSet<Listener<State>> = LinkedHashSet()
+    private val listeners: LinkedHashSet<Listener<State, EventPayload>> = LinkedHashSet()
     private var inTransition: Boolean = false
 
     /**
@@ -141,7 +139,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
      * If this [`listener`][listener] has been already added, then this call is no op.
      */
     @Synchronized
-    fun addListener(listener: Listener<State>) {
+    fun addListener(listener: Listener<State, EventPayload>) {
         if (!listeners.contains(listener)) {
             listeners.add(listener)
         }
@@ -159,7 +157,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
      * Removes [`listener`][listener] from this `StateMachine`.
      */
     @Synchronized
-    fun removeListener(listener: Listener<State>) {
+    fun removeListener(listener: Listener<State, EventPayload>) {
         listeners.remove(listener)
     }
 
@@ -174,6 +172,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
      * State changes are communicated via the [`StateMachine.Listener`][StateMachine.Listener] listeners.
      *
      * @param event [`Event`][Event]
+     * @param eventPayload [`EventPayload`][EventPayload] optional payload associated with the [event]
      *
      * @return flag of whether the event was actually consumed (meaning moving to a new state) or ignored.
      *
@@ -181,7 +180,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
      * but there is still an unfinished transition in progress.
      */
     @Synchronized
-    fun consumeEvent(event: Event): Boolean {
+    fun consumeEvent(event: Event, eventPayload: EventPayload? = null): Boolean {
         val transitionIdentity = Transition.Identity(event, currentState)
         val transition = graph[transitionIdentity] ?: return false
 
@@ -194,7 +193,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
             val newState = transition[i]
             currentState = newState
             for (listener in ArrayList(listeners)) {
-                listener.onStateChanged(oldState, newState)
+                listener.onStateChanged(oldState, newState, eventPayload)
             }
         }
 
