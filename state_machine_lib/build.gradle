@@ -2,17 +2,16 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 
-// https://issuetracker.google.com/issues/72050365
-afterEvaluate {
-    generateReleaseBuildConfig.enabled = false
-}
-
 apply plugin: 'kotlin-android'
 
 def libraryVersionName = "0.3.0"
 def artifactName = 'StateMachine'
 
 android {
+
+    buildFeatures {
+        buildConfig = false
+    }
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
