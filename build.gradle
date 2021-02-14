@@ -12,7 +12,6 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
 
@@ -25,18 +24,4 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
-}
-
-def bintrayPropertiesFile = rootProject.file('bintray.properties')
-if (bintrayPropertiesFile.exists()) {
-    def inputStream = bintrayPropertiesFile.newInputStream()
-    try {
-        def properties = new Properties()
-        properties.load(inputStream)
-        properties.each {
-            ext.set(it.key, it.value)
-        }
-    } finally {
-        inputStream.close()
-    }
 }
