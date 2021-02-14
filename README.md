@@ -14,8 +14,6 @@ allprojects {
 }
 ```
 
-Note: due to security considerations it is strongly recommended to put the `https://jitpack.io` maven repo __BEFORE__ the `jcenter()`.
-
 At a module level `build.gradle`, add the following dependency:
 
 ```groovy
