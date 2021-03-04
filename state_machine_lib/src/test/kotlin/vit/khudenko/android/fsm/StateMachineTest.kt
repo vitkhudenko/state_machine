@@ -591,7 +591,7 @@ class StateMachineTest {
         doAnswer {
             // listener2 will remove itself as soon as notified
             stateMachine.removeListener(listener2)
-        }.`when`(listener1).onStateChanged(STATE_A, STATE_B)
+        }.`when`(listener2).onStateChanged(STATE_A, STATE_B)
 
         with(stateMachine) {
             addListener(listener1)
