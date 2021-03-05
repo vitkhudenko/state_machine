@@ -127,7 +127,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
                     "no transition defined with start state matching the initial state ($initialState)"
                 )
             }
-            return StateMachine(graph, initialState)
+            return StateMachine(HashMap(graph), initialState)
         }
     }
 

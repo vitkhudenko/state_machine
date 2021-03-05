@@ -1,6 +1,8 @@
 package vit.khudenko.android.fsm
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import vit.khudenko.android.fsm.test_utils.Utils.Event
 import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_1
@@ -110,7 +112,6 @@ class StateMachineBuilderTest {
         }
     }
 
-
     @Test
     fun `builder should successfully create state machine`() {
         val transition1 = StateMachine.Transition(EVENT_1, listOf(STATE_A, STATE_B))
@@ -127,6 +128,26 @@ class StateMachineBuilderTest {
             .build()
 
         assertSame(state, stateMachine.getCurrentState())
+    }
+
+    @Test
+    fun `once a state machine is created adding a new transition to builder should not affect the state machine`() {
+        val builder = StateMachine.Builder<Event, State>()
+        val stateMachine = builder
+            .addTransition(StateMachine.Transition(EVENT_1, listOf(STATE_A, STATE_B)))
+            .setInitialState(STATE_A)
+            .build()
+
+        assertTrue(stateMachine.consumeEvent(EVENT_1))
+        assertSame(STATE_B, stateMachine.getCurrentState())
+
+        assertFalse(stateMachine.consumeEvent(EVENT_2))
+        assertSame(STATE_B, stateMachine.getCurrentState())
+
+        builder.addTransition(StateMachine.Transition(EVENT_2, listOf(STATE_B, STATE_C)))
+
+        assertFalse(stateMachine.consumeEvent(EVENT_2))
+        assertSame(STATE_B, stateMachine.getCurrentState())
     }
 
     private fun getCauseForDuplicateStartState(event: Event, state: State) =
