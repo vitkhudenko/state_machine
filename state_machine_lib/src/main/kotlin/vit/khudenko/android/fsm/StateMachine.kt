@@ -1,9 +1,6 @@
 package vit.khudenko.android.fsm
 
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.LinkedHashSet
+import java.util.Collections
 import kotlin.collections.set
 
 /**
@@ -57,6 +54,9 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
 
     /**
      * Builder is not thread-safe.
+     *
+     * @param [Event] event parameter of enum type.
+     * @param [State] state parameter of enum type.
      */
     class Builder<Event : Enum<Event>, State : Enum<State>> {
 
@@ -64,17 +64,15 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
         private lateinit var initialState: State
 
         /**
-         * A transition defines its identity as a pair of the [`event`][event] and the starting state
-         * (the first item in the [`statePath`][statePath]). `StateMachine` allows unique transitions
-         * only (each transition must have a unique identity).
-         *
-         * @param event [`Event`][Event].
-         * @param statePath a list of states.
+         * @param transition [`Transition`][Transition]<[`Event`][Event], [`State`][State]>, a definition of
+         * a state path for a give event.
          *
          * @return [`StateMachine.Builder`][StateMachine.Builder]
          *
          * @throws [StateMachineBuilderValidationException] if a duplicate transition identified (by a combination
          *                                                  of event and starting state)
+         *
+         * @see [Transition]
          */
         fun addTransition(transition: Transition<Event, State>): Builder<Event, State> {
             val statePathCopy = transition.statePath.toMutableList()
