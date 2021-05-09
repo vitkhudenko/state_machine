@@ -22,8 +22,6 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 30
-        versionCode 1
-        versionName libraryVersionName
     }
 
     buildTypes {
