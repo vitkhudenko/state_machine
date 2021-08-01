@@ -1,9 +1,13 @@
 package vit.khudenko.android.fsm
 
+import com.nhaarman.mockitokotlin2.refEq
+import com.nhaarman.mockitokotlin2.verify
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.Mockito.doReturn
+import org.mockito.Mockito.spy
 import vit.khudenko.android.fsm.test_utils.Utils.Event
 import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_1
 import vit.khudenko.android.fsm.test_utils.Utils.Event.EVENT_2
@@ -148,6 +152,19 @@ class StateMachineBuilderTest {
 
         assertFalse(stateMachine.consumeEvent(EVENT_2))
         assertSame(STATE_B, stateMachine.getCurrentState())
+    }
+
+    @Test
+    fun `calling addTransitions with Pair is the same as calling addTransition with Transition`() {
+        val transition = StateMachine.Transition(EVENT_1, listOf(STATE_A, STATE_B))
+
+        val builder = spy(StateMachine.Builder<Event, State>())
+
+        doReturn(builder).`when`(builder).addTransition(refEq(transition))
+
+        builder.addTransitions(Pair(transition.event, transition.statePath.toList()))
+
+        verify(builder).addTransition(refEq(transition))
     }
 
     private fun getCauseForDuplicateStartState(event: Event, state: State) =

@@ -76,6 +76,21 @@ sessionStateMachine.addListener(object : StateMachine.Listener<Session.State> {
         // do something
     }
 })
+
+// or in a more concise way
+sessionStateMachine.addListener { oldState, newState -> /* do something */ }
+```
+
+It is also possible to define transitions in a more concise way:
+
+```kotlin
+val sessionStateMachine = StateMachine.Builder<Session.Event, Session.State>()
+    // ..
+    .addTransitions(
+        Session.Event.LOGIN to listOf(Session.State.INACTIVE, Session.State.ACTIVE),
+        Session.Event.LOGOUT to listOf(Session.State.ACTIVE, Session.State.INACTIVE),
+        Session.Event.LOGOUT_AND_FORGET to listOf(Session.State.ACTIVE, Session.State.FORGOTTEN)
+    )
 ```
 
 ### Threading
@@ -86,21 +101,20 @@ The `StateMachine` is a synchronous tool, meaning it neither creates threads, no
 
 ### License
 
-
 > MIT License
-> 
+>
 > Copyright (c) 2019 Vitaliy Khudenko
-> 
+>
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 > of this software and associated documentation files (the "Software"), to deal
 > in the Software without restriction, including without limitation the rights
 > to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 > copies of the Software, and to permit persons to whom the Software is
 > furnished to do so, subject to the following conditions:
-> 
+>
 > The above copyright notice and this permission notice shall be included in all
 > copies or substantial portions of the Software.
-> 
+>
 > THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 > IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 > FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE

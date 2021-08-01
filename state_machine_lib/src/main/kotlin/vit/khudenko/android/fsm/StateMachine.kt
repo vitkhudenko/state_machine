@@ -33,6 +33,18 @@ import kotlin.collections.set
  *        .build()
  * ```
  *
+ * It is also possible to define transitions in a more concise way:
+ *
+ * ```
+ *    val sessionStateMachine = StateMachine.Builder<Session.Event, Session.State>()
+ *        // ..
+ *        .addTransitions(
+ *            Session.Event.LOGIN to listOf(Session.State.INACTIVE, Session.State.ACTIVE),
+ *            Session.Event.LOGOUT to listOf(Session.State.ACTIVE, Session.State.INACTIVE),
+ *            Session.Event.LOGOUT_AND_FORGET to listOf(Session.State.ACTIVE, Session.State.FORGOTTEN)
+ *        )
+ * ```
+ *
  * The implementation is thread-safe. Public API methods are declared as `synchronized`.
  *
  * @param [Event] event parameter of enum type.
@@ -48,7 +60,7 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
     /**
      * A callback to communicate state changes of a [`StateMachine`][StateMachine].
      */
-    interface Listener<State> {
+    fun interface Listener<State> {
         fun onStateChanged(oldState: State, newState: State)
     }
 
@@ -86,6 +98,23 @@ class StateMachine<Event : Enum<Event>, State : Enum<State>> private constructor
 
             graph[transition.identity] = Collections.unmodifiableList(statePathCopy)
 
+            return this
+        }
+
+        /**
+         * @param transitions vararg of transition definitions.
+         *
+         * @return [`StateMachine.Builder`][StateMachine.Builder]
+         *
+         * @throws [StateMachineBuilderValidationException] if a duplicate transition identified (by a combination
+         *                                                  of event and starting state)
+         *
+         * @see [Transition]
+         */
+        fun addTransitions(vararg transitions: Pair<Event, List<State>>): Builder<Event, State> {
+            transitions.forEach {
+                addTransition(it.let { (event, statePath) -> Transition(event, statePath) })
+            }
             return this
         }
 
