@@ -17,7 +17,7 @@ allprojects {
 At a module level `build.gradle`, add the following dependency:
 
 ```groovy
-implementation 'com.github.vitkhudenko:state_machine:0.3.5'
+implementation 'com.github.vitkhudenko:state_machine:0.3.7'
 ```
 
 ### Usage
