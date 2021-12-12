@@ -93,6 +93,10 @@ val sessionStateMachine = StateMachine.Builder<Session.Event, Session.State>()
     )
 ```
 
+### Test coverage
+
+[Test Coverage report][test_coverage]
+
 ### Threading
 
 The `StateMachine` implementation is thread-safe. Public API methods are declared as `synchronized`.
@@ -122,3 +126,5 @@ The `StateMachine` is a synchronous tool, meaning it neither creates threads, no
 > LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 > SOFTWARE.
+
+[test_coverage]: https://rawcdn.githack.com/vitkhudenko/state_machine/347ee35c4fd673e98e64376f5f1d3082f016f4cd/state_machine_lib/reports/kover/index.html
