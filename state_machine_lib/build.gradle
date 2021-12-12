@@ -1,6 +1,9 @@
-apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
-apply plugin: 'kotlin-android'
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+    id 'kotlin-android'
+    id 'org.jetbrains.kotlinx.kover' version "$kover_version"
+}
 
 def libraryVersionName = "0.3.7"
 def artifactName = 'StateMachine'
@@ -31,6 +34,24 @@ android {
         }
     }
 
+    testOptions {
+        unitTests.all {
+            if (name == "testReleaseUnitTest") {
+                kover {
+                    enabled = true
+                }
+            }
+        }
+    }
+}
+
+tasks.koverHtmlReport {
+    enabled = true
+    htmlReportDir.set(file("/reports/kover"))
+}
+
+tasks.koverXmlReport {
+    enabled = false
 }
 
 dependencies {
