@@ -7,6 +7,7 @@ import com.nhaarman.mockitokotlin2.verifyZeroInteractions
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.Mockito.any
 import org.mockito.Mockito.never
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.verify
@@ -729,6 +730,7 @@ class StateMachineTest {
 
         assertEquals(STATE_B, stateMachine.getCurrentState())
 
-        verifyZeroInteractions(listener1, listener2)
+        verify(listener1, never()).onStateChanged(anyOrNull(), anyOrNull())
+        verify(listener2, never()).onStateChanged(anyOrNull(), anyOrNull())
     }
 }
