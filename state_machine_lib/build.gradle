@@ -5,7 +5,7 @@ plugins {
     id 'org.jetbrains.kotlinx.kover' version "$kover_version"
 }
 
-def libraryVersionName = "0.3.8"
+def libraryVersionName = "0.3.9"
 def artifactName = 'StateMachine'
 
 android {
@@ -19,12 +19,12 @@ android {
         test.java.srcDirs += 'src/test/kotlin'
     }
 
-    compileSdkVersion 31
-    buildToolsVersion "31.0.0"
+    compileSdkVersion 32
+    buildToolsVersion "33.0.0"
 
     defaultConfig {
         minSdk 21
-        targetSdk 31
+        targetSdk 33
     }
 
     buildTypes {
@@ -60,7 +60,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.mockito:mockito-core:4.1.0'
+    testImplementation 'org.mockito:mockito-core:4.6.1'
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
 }
 
